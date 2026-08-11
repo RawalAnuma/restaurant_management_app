@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant_management_app/providers/food_provider.dart';
+import '../widgets/food_card.dart';
 
 class FoodScreen extends StatefulWidget {
   const FoodScreen({super.key});
@@ -33,10 +34,7 @@ class _FoodScreenState extends State<FoodScreen> {
               itemCount: foodProvider.foods.length,
               itemBuilder: (context, index) {
                 final food = foodProvider.foods[index];
-                return ListTile(
-                  title: Text(food.name),
-                  subtitle: Text('Rs. ${food.price}'),
-                );
+                return FoodCard(food: food);
               },
             ),
     );
