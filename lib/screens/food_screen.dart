@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant_management_app/providers/food_provider.dart';
+import 'package:restaurant_management_app/screens/create_food_screen.dart';
 import '../widgets/food_card.dart';
 
 class FoodScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class _FoodScreenState extends State<FoodScreen> {
     super.initState();
 
     Future.microtask(() {
+      if (!mounted) return;
       context.read<FoodProvider>().fetchFoods();
     });
   }
@@ -37,6 +39,16 @@ class _FoodScreenState extends State<FoodScreen> {
                 return FoodCard(food: food);
               },
             ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreateFoodScreen()),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
