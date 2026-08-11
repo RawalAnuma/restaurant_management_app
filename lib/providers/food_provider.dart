@@ -15,7 +15,9 @@ class FoodProvider extends ChangeNotifier {
 
     try {
       final response = await apiService.get('/foods');
-      foods = (response as List)
+      final data = response['data'];
+
+      foods = (data as List)
           .map((food) => FoodModel.fromJson(food))
           .toList();
     } catch (e) {
