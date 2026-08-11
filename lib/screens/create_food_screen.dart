@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:restaurant_management_app/models/category_model.dart';
+import 'package:restaurant_management_app/providers/category_provider.dart';
+import 'package:restaurant_management_app/providers/food_provider.dart';
 
 class CreateFoodScreen extends StatefulWidget {
   const CreateFoodScreen({super.key});
@@ -13,6 +17,20 @@ class _CreateFoodScreenState extends State<CreateFoodScreen> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
+
+  CategoryModel? _selectedCategory;
+  bool _status = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      if (!mounted) return;
+
+      context.read<CategoryProvider>().fetchCategories();
+    });
+  }
 
   @override
   void dispose() {
@@ -33,6 +51,42 @@ class _CreateFoodScreenState extends State<CreateFoodScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              Consumer<CategoryProvider>(
+                builder: (context, categoryProvider, child) {
+                  if (categoryProvider.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  return DropdownButtonFormField<CategoryModel>(
+                    initialValue: _selectedCategory,
+                    decoration: const InputDecoration(
+                      labelText: 'Category',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: categoryProvider.categories.map((category) {
+                      return DropdownMenuItem<CategoryModel>(
+                        value: category,
+                        child: Text(category.name),
+                      );
+                    }).toList(),
+                    onChanged: (category) {
+                      setState(() {
+                        _selectedCategory = category;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Please select a category';
+                      }
+
+                      return null;
+                    },
+                  );
+                },
+              ),
+
+              const SizedBox(height: 16),
+
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
@@ -92,13 +146,58 @@ class _CreateFoodScreenState extends State<CreateFoodScreen> {
                 },
               ),
 
+              const SizedBox(height: 16),
+
+              SwitchListTile(
+                title: const Text('Available'),
+                value: _status,
+                onChanged: (value) {
+                  setState(() {
+                    _status = value;
+                  });
+                },
+                contentPadding: EdgeInsets.zero,
+              ),
+
               const SizedBox(height: 24),
 
               ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {}
+                onPressed: () async {
+                  if (!_formKey.currentState!.validate()) {
+                    return;
+                  }
+
+                  final foodProvider = context.read<FoodProvider>();
+
+                  try {
+                    await foodProvider.createFood(
+                      categoryId: _selectedCategory!.id,
+                      name: _nameController.text.trim(),
+                      description: _descriptionController.text.trim(),
+                      price: double.parse(_priceController.text.trim()),
+                      image: null,
+                      status: _status,
+                    );
+
+                    if (!context.mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Food created successfully'),
+                      ),
+                    );
+
+                    Navigator.pop(context);
+                  } catch (e) {
+                    if (!context.mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to create food: $e')),
+                    );
+                  }
                 },
-                child: const Text('Continue'),
+
+                child: const Text('Add Food'),
               ),
             ],
           ),
