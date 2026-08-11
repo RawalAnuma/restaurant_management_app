@@ -17,14 +17,37 @@ class FoodProvider extends ChangeNotifier {
       final response = await apiService.get('/foods');
       final data = response['data'];
 
-      foods = (data as List)
-          .map((food) => FoodModel.fromJson(food))
-          .toList();
+      foods = (data as List).map((food) => FoodModel.fromJson(food)).toList();
     } catch (e) {
       debugPrint('Error fetching foods: $e');
     }
 
     isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> createFood({
+    required int categoryId,
+    required String name,
+    required String description,
+    required double price,
+    String? image,
+    required bool status,
+  }) async {
+    try {
+      await apiService.post('/foods', {
+        'category_id': categoryId,
+        'name': name,
+        'description': description,
+        'price': price,
+        'image': image,
+        'status': status,
+      });
+
+      await fetchFoods();
+    } catch (e) {
+      debugPrint('Error creating food: $e');
+      rethrow;
+    }
   }
 }
