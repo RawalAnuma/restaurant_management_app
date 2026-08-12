@@ -50,4 +50,41 @@ class FoodProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> updateFood({
+    required int id,
+    required int categoryId,
+    required String name,
+    required String description,
+    required double price,
+    String? image,
+    required bool status,
+  }) async {
+    try {
+      await apiService.put('/foods/$id', {
+        'category_id': categoryId,
+        'name': name,
+        'description': description,
+        'price': price,
+        'image': image,
+        'status': status,
+      });
+
+      await fetchFoods();
+    } catch (e) {
+      debugPrint('Error updating food: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteFood(int id) async {
+    try {
+      await apiService.delete('/foods/$id');
+
+      await fetchFoods();
+    } catch (e) {
+      debugPrint('Error deleting food: $e');
+      rethrow;
+    }
+  }
 }
