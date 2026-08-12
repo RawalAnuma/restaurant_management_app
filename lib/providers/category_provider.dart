@@ -29,6 +29,10 @@ class CategoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> createCategory(String name) async {
+    await apiService.post('/categories', {'name': name});
+  }
+
   Future<void> deleteCategory(int id) async {
     isLoading = true;
     notifyListeners();
