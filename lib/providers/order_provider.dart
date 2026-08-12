@@ -27,4 +27,13 @@ class OrderProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> updateOrderStatus({
+    required int orderId,
+    required String status,
+  }) async {
+    await apiService.patch('/orders/$orderId/status', {'status': status});
+
+    await fetchOrders();
+  }
 }
