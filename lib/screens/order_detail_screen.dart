@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:restaurant_management_app/providers/order_provider.dart';
 
 import '../models/order_model.dart';
 
-class OrderDetailScreen extends StatelessWidget {
+class OrderDetailScreen extends StatefulWidget {
   final OrderModel order;
 
   const OrderDetailScreen({super.key, required this.order});
 
   @override
+  State<OrderDetailScreen> createState() => _OrderDetailScreenState();
+}
+
+class _OrderDetailScreenState extends State<OrderDetailScreen> {
+  bool _isUpdating = false;
+
+  @override
   Widget build(BuildContext context) {
+    final order = widget.order;
+
     return Scaffold(
       appBar: AppBar(title: Text('Order #${order.id}')),
       body: ListView(
@@ -24,7 +35,91 @@ class OrderDetailScreen extends StatelessWidget {
                     'Status',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  Chip(label: Text(order.status.toUpperCase())),
+
+                  DropdownButton<String>(
+                    value: order.status,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'pending',
+                        child: Text('Pending'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'preparing',
+                        child: Text('Preparing'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'completed',
+                        child: Text('Completed'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'cancelled',
+                        child: Text('Cancelled'),
+                      ),
+                    ],
+                    onChanged: _isUpdating
+                        ? null
+                        : (newStatus) async {
+                            if (newStatus == null ||
+                                newStatus == order.status) {
+                              return;
+                            }
+
+                            setState(() {
+                              _isUpdating = true;
+                            });
+
+                            try {
+                              await context
+                                  .read<OrderProvider>()
+                                  .updateOrderStatus(
+                                    orderId: order.id,
+                                    status: newStatus,
+                                  );
+
+                              if (!mounted) return;
+
+                              // Update the UI immediately.
+                              setState(() {
+                                order.status = newStatus;
+                                _isUpdating = false;
+                              });
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Order status updated'),
+                                ),
+                              );
+
+                              // Give the user a moment to see the update.
+                              await Future.delayed(
+                                const Duration(milliseconds: 500),
+                              );
+
+                              if (!mounted) return;
+
+                              Navigator.of(context).pop(true);
+                            } catch (e) {
+                              if (!mounted) return;
+
+                              setState(() {
+                                _isUpdating = false;
+                              });
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to update status: $e'),
+                                ),
+                              );
+                            }
+                          },
+                  ),
+
+                  if (_isUpdating)
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                 ],
               ),
             ),
