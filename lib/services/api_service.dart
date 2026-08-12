@@ -73,4 +73,25 @@ class ApiService {
 
     throw Exception('Request failed: ${response.statusCode}');
   }
+
+  Future<dynamic> patch(String endpoint, Map<String, dynamic> data) async {
+    final response = await http.patch(
+      Uri.parse('${ApiConstants.baseUrl}$endpoint'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) {
+        return null;
+      }
+
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Request failed: ${response.statusCode}');
+  }
 }
