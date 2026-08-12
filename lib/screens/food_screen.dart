@@ -33,6 +33,7 @@ class _FoodScreenState extends State<FoodScreen> {
           : foodProvider.foods.isEmpty
           ? const Center(child: Text('No foods found'))
           : ListView.builder(
+              padding: const EdgeInsets.only(top: 8, bottom: 100),
               itemCount: foodProvider.foods.length,
               itemBuilder: (context, index) {
                 final food = foodProvider.foods[index];
