@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:restaurant_management_app/screens/create_category_screen.dart';
 
 import '../providers/category_provider.dart';
 
@@ -32,9 +33,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Delete Category'),
-          content: Text(
-            'Are you sure you want to delete "$categoryName"?',
-          ),
+          content: Text('Are you sure you want to delete "$categoryName"?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
@@ -61,18 +60,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Category deleted successfully'),
-        ),
+        const SnackBar(content: Text('Category deleted successfully')),
       );
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to delete category: $e'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete category: $e')));
     }
   }
 
@@ -88,9 +83,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       body: Consumer<CategoryProvider>(
         builder: (context, categoryProvider, child) {
           if (categoryProvider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (categoryProvider.categories.isEmpty) {
@@ -100,11 +93,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: const [
                   SizedBox(height: 180),
-                  Icon(
-                    Icons.category_outlined,
-                    size: 70,
-                    color: Colors.grey,
-                  ),
+                  Icon(Icons.category_outlined, size: 70, color: Colors.grey),
                   SizedBox(height: 16),
                   Center(
                     child: Text(
@@ -177,8 +166,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // We'll add CreateCategoryScreen next.
+        onPressed: () async {
+          final created = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CreateCategoryScreen()),
+          );
+
+          if (created == true && mounted) {
+            context.read<CategoryProvider>().fetchCategories();
+          }
         },
         icon: const Icon(Icons.add),
         label: const Text('Add Category'),
