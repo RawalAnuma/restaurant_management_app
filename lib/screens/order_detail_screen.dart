@@ -64,17 +64,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               return;
                             }
 
+                            final orderProvider = context.read<OrderProvider>();
+                            final messenger = ScaffoldMessenger.of(context);
+                            final navigator = Navigator.of(context);
+
                             setState(() {
                               _isUpdating = true;
                             });
 
                             try {
-                              await context
-                                  .read<OrderProvider>()
-                                  .updateOrderStatus(
-                                    orderId: order.id,
-                                    status: newStatus,
-                                  );
+                              await orderProvider.updateOrderStatus(
+                                orderId: order.id,
+                                status: newStatus,
+                              );
 
                               if (!mounted) return;
 
@@ -84,7 +86,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 _isUpdating = false;
                               });
 
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              messenger.showSnackBar(
                                 const SnackBar(
                                   content: Text('Order status updated'),
                                 ),
@@ -97,7 +99,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
                               if (!mounted) return;
 
-                              Navigator.of(context).pop(true);
+                              navigator.pop(true);
                             } catch (e) {
                               if (!mounted) return;
 
@@ -105,7 +107,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 _isUpdating = false;
                               });
 
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              messenger.showSnackBar(
                                 SnackBar(
                                   content: Text('Failed to update status: $e'),
                                 ),
