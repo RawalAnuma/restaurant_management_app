@@ -85,13 +85,15 @@ class _OrderScreenState extends State<OrderScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          final orderProvider = context.read<OrderProvider>();
+
           final created = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const CreateOrderScreen()),
           );
 
           if (created == true && mounted) {
-            context.read<OrderProvider>().fetchOrders();
+            orderProvider.fetchOrders();
           }
         },
         icon: const Icon(Icons.add),
