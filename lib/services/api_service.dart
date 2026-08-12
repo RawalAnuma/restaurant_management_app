@@ -77,10 +77,7 @@ class ApiService {
   Future<dynamic> patch(String endpoint, Map<String, dynamic> data) async {
     final response = await http.patch(
       Uri.parse('${ApiConstants.baseUrl}$endpoint'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers: await _headers(),
       body: jsonEncode(data),
     );
 
