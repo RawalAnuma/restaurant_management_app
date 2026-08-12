@@ -2,11 +2,24 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:restaurant_management_app/utils/api_constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
+  Future<Map<String, String>> _headers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
   Future<dynamic> get(String endpoint) async {
     final response = await http.get(
       Uri.parse('${ApiConstants.baseUrl}$endpoint'),
+      headers: await _headers(),
     );
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -19,10 +32,7 @@ class ApiService {
   Future<dynamic> post(String endpoint, Map<String, dynamic> data) async {
     final response = await http.post(
       Uri.parse('${ApiConstants.baseUrl}$endpoint'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers: await _headers(),
       body: jsonEncode(data),
     );
 
@@ -36,10 +46,7 @@ class ApiService {
   Future<dynamic> put(String endpoint, Map<String, dynamic> data) async {
     final response = await http.put(
       Uri.parse('${ApiConstants.baseUrl}$endpoint'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers: await _headers(),
       body: jsonEncode(data),
     );
 
@@ -53,7 +60,7 @@ class ApiService {
   Future<dynamic> delete(String endpoint) async {
     final response = await http.delete(
       Uri.parse('${ApiConstants.baseUrl}$endpoint'),
-      headers: {'Accept': 'application/json'},
+      headers: await _headers(),
     );
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
