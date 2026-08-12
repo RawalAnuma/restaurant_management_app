@@ -1,7 +1,7 @@
 class OrderModel {
   final int id;
   final double total;
-  final String status;
+  String status;
   final String createdAt;
   final List<OrderItemModel> items;
 
