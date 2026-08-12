@@ -28,4 +28,18 @@ class CategoryProvider extends ChangeNotifier {
     isLoading = false;
     notifyListeners();
   }
+
+  Future<void> deleteCategory(int id) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      await apiService.delete('/categories/$id');
+
+      categories.removeWhere((category) => category.id == id);
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }
