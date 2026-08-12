@@ -90,7 +90,7 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
         status: _status,
       );
 
-      if (!context.mounted) return;
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Food updated successfully')),
