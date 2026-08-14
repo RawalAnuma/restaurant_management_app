@@ -727,6 +727,7 @@ class _FoodScreenState extends State<FoodScreen> {
       // ADD FOOD
       // =====================================================
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'food_add_button',
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         elevation: 4,
@@ -794,9 +795,7 @@ class _FoodCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            
             // Image
-            
             Stack(
               children: [
                 SizedBox(
@@ -895,7 +894,6 @@ class _FoodCard extends StatelessWidget {
             ),
 
             // INFORMATION
-            
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
               child: Column(
@@ -970,9 +968,7 @@ class _FoodCard extends StatelessWidget {
 
                   const SizedBox(height: 11),
 
-                  
                   // ACTIONS
-                  
                   Row(
                     children: [
                       Expanded(
@@ -1032,9 +1028,7 @@ class _FoodCard extends StatelessWidget {
   }
 }
 
-
 // Image Placeholder
-
 
 class _ImagePlaceholder extends StatelessWidget {
   final bool isAvailable;
@@ -1075,9 +1069,7 @@ class _ImagePlaceholder extends StatelessWidget {
   }
 }
 
-
 // Empty State
-
 
 class _EmptyFoodState extends StatelessWidget {
   final bool hasFilters;
