@@ -403,13 +403,37 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           Container(
             width: 64,
             height: 64,
-
             decoration: BoxDecoration(
               color: lightBrown,
               borderRadius: BorderRadius.circular(12),
             ),
+            clipBehavior: Clip.antiAlias,
+            child: item.foodImage != null && item.foodImage!.isNotEmpty
+                ? Image.network(
+                    item.foodImage!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.restaurant,
+                        color: primaryColor,
+                        size: 30,
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) {
+                        return child;
+                      }
 
-            child: Icon(Icons.restaurant, color: primaryColor, size: 30),
+                      return const Center(
+                        child: SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
+                    },
+                  )
+                : Icon(Icons.restaurant, color: primaryColor, size: 30),
           ),
 
           const SizedBox(width: 14),
