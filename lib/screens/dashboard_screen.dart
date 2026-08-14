@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:restaurant_management_app/screens/profile_screen.dart';
 
 import '../providers/food_provider.dart';
 import '../providers/category_provider.dart';
 import '../providers/order_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final VoidCallback onViewAllOrders;
+  final VoidCallback onProfile;
+  const DashboardScreen({
+    super.key,
+    required this.onViewAllOrders,
+    required this.onProfile,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -119,44 +126,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
         elevation: 0,
         centerTitle: false,
 
+        // Adds space at the top
+        toolbarHeight: 85,
+
         titleSpacing: 20,
 
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Restaurant Admin',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: textColor,
+        title: const Padding(
+          padding: EdgeInsets.only(top: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Restaurant Admin',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: textColor,
+                ),
               ),
-            ),
-            SizedBox(height: 2),
-            Text(
-              'Management Dashboard',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: secondaryTextColor,
+              SizedBox(height: 3),
+              Text(
+                'Management Dashboard',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: secondaryTextColor,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
 
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            height: 38,
-            width: 38,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFEFE5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.person_outline_rounded,
-              size: 21,
-              color: primaryColor,
+          Padding(
+            padding: const EdgeInsets.only(right: 16, top: 10),
+            child: GestureDetector(
+              onTap: widget.onProfile,
+              child: Container(
+                height: 42,
+                width: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFEFE5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.person_outline_rounded,
+                  size: 22,
+                  color: primaryColor,
+                ),
+              ),
             ),
           ),
         ],
@@ -215,7 +233,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Good Morning, Admin 👋',
+                              'Hello, Admin 👋',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
@@ -228,7 +246,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Text(
                               "Here's what's happening\nin your restaurant today.",
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 15,
                                 height: 1.5,
                                 color: Colors.white.withValues(alpha: 0.88),
                               ),
@@ -363,10 +381,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
 
                     TextButton(
-                      onPressed: () {
-                        // Orders navigation can be connected here.
-                      },
-
+                      onPressed: widget.onViewAllOrders,
                       style: TextButton.styleFrom(
                         foregroundColor: primaryColor,
                         padding: const EdgeInsets.symmetric(
@@ -374,7 +389,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           vertical: 6,
                         ),
                       ),
-
                       child: const Row(
                         children: [
                           Text(
@@ -384,9 +398,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-
                           SizedBox(width: 4),
-
                           Icon(Icons.arrow_forward_rounded, size: 15),
                         ],
                       ),
