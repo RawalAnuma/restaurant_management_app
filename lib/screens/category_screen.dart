@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:restaurant_management_app/screens/create_category_screen.dart';
-import 'package:restaurant_management_app/screens/edit_category_screen.dart';
 
+import '../models/category_model.dart';
 import '../providers/category_provider.dart';
+import 'create_category_screen.dart';
+import 'edit_category_screen.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
@@ -13,6 +14,12 @@ class CategoryScreen extends StatefulWidget {
 }
 
 class _CategoryScreenState extends State<CategoryScreen> {
+  static const Color primaryOrange = Color(0xFFB94700);
+  static const Color darkOrange = Color(0xFF9E3D00);
+  static const Color backgroundColor = Color(0xFFF9F8F6);
+  static const Color textColor = Color(0xFF171717);
+  static const Color secondaryText = Color(0xFF8A7D75);
+
   @override
   void initState() {
     super.initState();
@@ -24,24 +31,97 @@ class _CategoryScreenState extends State<CategoryScreen> {
     });
   }
 
-  Future<void> _deleteCategory(
-    BuildContext context,
-    int categoryId,
-    String categoryName,
-  ) async {
+  IconData _getCategoryIcon(String name) {
+    final category = name.toLowerCase();
+
+    if (category.contains('pizza')) {
+      return Icons.local_pizza_outlined;
+    }
+
+    if (category.contains('burger')) {
+      return Icons.lunch_dining_outlined;
+    }
+
+    if (category.contains('drink') || category.contains('beverage')) {
+      return Icons.local_cafe_outlined;
+    }
+
+    if (category.contains('dessert')) {
+      return Icons.icecream_outlined;
+    }
+
+    if (category.contains('salad')) {
+      return Icons.eco_outlined;
+    }
+
+    if (category.contains('chicken')) {
+      return Icons.set_meal_outlined;
+    }
+
+    return Icons.restaurant_menu_outlined;
+  }
+
+  void _openCreateCategory() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateCategoryScreen()),
+    ).then((_) {
+      if (!mounted) return;
+
+      context.read<CategoryProvider>().fetchCategories();
+    });
+  }
+
+  void _openEditCategory(CategoryModel category) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EditCategoryScreen(category: category)),
+    ).then((_) {
+      if (!mounted) return;
+
+      context.read<CategoryProvider>().fetchCategories();
+    });
+  }
+
+  Future<void> _deleteCategory(CategoryModel category) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete Category'),
-          content: Text('Are you sure you want to delete "$categoryName"?'),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Delete Category',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            'Are you sure you want to delete "${category.name}"?',
+            style: const TextStyle(color: secondaryText, height: 1.4),
+          ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: secondaryText),
+              ),
             ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(9),
+                ),
+              ),
               child: const Text('Delete'),
             ),
           ],
@@ -49,157 +129,277 @@ class _CategoryScreenState extends State<CategoryScreen> {
       },
     );
 
-    if (shouldDelete != true) return;
-
-    if (!mounted) return;
-
-    final categoryProvider = context.read<CategoryProvider>();
+    if (shouldDelete != true || !mounted) {
+      return;
+    }
 
     try {
-      await categoryProvider.deleteCategory(categoryId);
+      await context.read<CategoryProvider>().deleteCategory(category.id);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Category deleted successfully')),
+        const SnackBar(
+          content: Text('Category deleted successfully'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to delete category: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete category: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
+  }
+
+  Widget _buildCategoryCard(CategoryModel category) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // CATEGORY ICON
+          Container(
+            height: 57,
+            width: 57,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3ED),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              _getCategoryIcon(category.name),
+              color: primaryOrange,
+              size: 29,
+            ),
+          ),
+
+          const SizedBox(width: 18),
+
+          // CATEGORY NAME
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  category.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: textColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Food category',
+                  style: TextStyle(color: secondaryText, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // EDIT BUTTON
+          _buildActionButton(
+            icon: Icons.edit_outlined,
+            color: primaryOrange,
+            onPressed: () {
+              _openEditCategory(category);
+            },
+          ),
+
+          const SizedBox(width: 8),
+
+          // DELETE BUTTON
+          _buildActionButton(
+            icon: Icons.delete_outline,
+            color: Colors.red,
+            onPressed: () {
+              _deleteCategory(category);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: const Color(0xFFFFF8F5),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          height: 43,
+          width: 43,
+          child: Icon(icon, color: color, size: 21),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              height: 75,
+              width: 75,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3ED),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(
+                Icons.category_outlined,
+                size: 38,
+                color: primaryOrange,
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'No Categories Yet',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 7),
+            const Text(
+              'Create a category to organize your menu.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: secondaryText, fontSize: 14),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _openCreateCategory,
+              icon: const Icon(Icons.add),
+              label: const Text('Add Category'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryOrange,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Categories',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: Consumer<CategoryProvider>(
-        builder: (context, categoryProvider, child) {
-          if (categoryProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    final categoryProvider = context.watch<CategoryProvider>();
 
-          if (categoryProvider.categories.isEmpty) {
-            return RefreshIndicator(
-              onRefresh: categoryProvider.fetchCategories,
+    return Scaffold(
+      backgroundColor: backgroundColor,
+
+      // APP BAR
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+
+        leading: IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.menu, color: Color(0xFF3F3028), size: 24),
+        ),
+
+        title: const Text(
+          'Restaurant Admin',
+          style: TextStyle(
+            color: darkOrange,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+
+        centerTitle: true,
+
+        actions: [
+          IconButton(
+            onPressed: () {
+              // Search can be implemented later.
+            },
+            icon: const Icon(Icons.search, color: Color(0xFF3F3028), size: 24),
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
+
+      body: categoryProvider.isLoading
+          ? const Center(child: CircularProgressIndicator(color: primaryOrange))
+          : categoryProvider.categories.isEmpty
+          ? _buildEmptyState()
+          : RefreshIndicator(
+              color: primaryOrange,
+              onRefresh: () {
+                return categoryProvider.fetchCategories();
+              },
               child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  SizedBox(height: 180),
-                  Icon(Icons.category_outlined, size: 70, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Center(
-                    child: Text(
-                      'No categories found',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 100),
+                children: [
+                  const Text(
+                    'Categories',
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
+
+                  const SizedBox(height: 4),
+
+                  const Text(
+                    'Manage your menu organization',
+                    style: TextStyle(color: Color(0xFF6E5548), fontSize: 16),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  ...categoryProvider.categories.map((category) {
+                    return _buildCategoryCard(category);
+                  }),
                 ],
               ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: categoryProvider.fetchCategories,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: categoryProvider.categories.length,
-              itemBuilder: (context, index) {
-                final category = categoryProvider.categories[index];
-
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    leading: CircleAvatar(
-                      child: const Icon(Icons.restaurant_menu),
-                    ),
-                    title: Text(
-                      category.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    subtitle: const Text('Food category'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () async {
-                            final result = await Navigator.push(
-                              this.context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    EditCategoryScreen(category: category),
-                              ),
-                            );
-
-                            if (result == true && mounted) {
-                              await this.context
-                                  .read<CategoryProvider>()
-                                  .fetchCategories();
-
-                              if (!mounted) return;
-
-                              ScaffoldMessenger.of(this.context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Category updated successfully',
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                        IconButton(
-                          tooltip: 'Delete',
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () {
-                            _deleteCategory(
-                              this.context,
-                              category.id,
-                              category.name,
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
             ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final created = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CreateCategoryScreen()),
-          );
 
-          if (created == true && mounted) {
-            context.read<CategoryProvider>().fetchCategories();
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Add Category'),
+      // ADD CATEGORY BUTTON
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openCreateCategory,
+        backgroundColor: darkOrange,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: const Icon(Icons.add, size: 31),
       ),
     );
   }
