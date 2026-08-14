@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+
+import '../utils/api_constants.dart';
+
 class FoodModel {
   final int id;
   final int categoryId;
@@ -20,6 +24,7 @@ class FoodModel {
   });
 
   factory FoodModel.fromJson(Map<String, dynamic> json) {
+    debugPrint('IMAGE FROM API: ${json['image']}');
     return FoodModel(
       id: json['id'],
       categoryId: json['category_id'],
@@ -27,7 +32,9 @@ class FoodModel {
       name: json['name'],
       description: json['description'],
       price: double.parse(json['price'].toString()),
-      image: json['image'],
+      image: json['image'] != null
+          ? '${ApiConstants.baseUrl.replaceFirst('/api', '')}/storage/foods/${json['image'].toString().split('/').last}'
+          : null,
       status: json['status'],
     );
   }
