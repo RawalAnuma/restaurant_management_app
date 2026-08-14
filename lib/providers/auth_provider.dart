@@ -25,6 +25,7 @@ class AuthProvider extends ChangeNotifier {
       });
 
       _token = response['token'];
+      debugPrint('LOGIN TOKEN: $_token');
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', _token!);
@@ -74,8 +75,11 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     try {
       await apiService.post('/logout', {});
+    } catch (e) {
+      debugPrint('Logout API error: $e');
     } finally {
       final prefs = await SharedPreferences.getInstance();
+
       await prefs.remove('token');
 
       _token = null;
