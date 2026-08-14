@@ -394,6 +394,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
       // ADD CATEGORY BUTTON
       floatingActionButton: FloatingActionButton(
+        heroTag: 'category_add_button',
         onPressed: _openCreateCategory,
         backgroundColor: darkOrange,
         foregroundColor: Colors.white,
