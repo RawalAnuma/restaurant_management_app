@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'food_screen.dart';
 import 'login_screen.dart';
+import 'main_navigation_screen.dart';
 
 class AuthCheckScreen extends StatefulWidget {
   const AuthCheckScreen({super.key});
@@ -29,26 +30,18 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     if (loggedIn) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => const FoodScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
       );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => const LoginScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }
