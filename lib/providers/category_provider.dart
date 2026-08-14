@@ -33,6 +33,28 @@ class CategoryProvider extends ChangeNotifier {
     await apiService.post('/categories', {'name': name});
   }
 
+  Future<bool> updateCategory(int id, String name) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await apiService.put('/categories/$id', {'name': name});
+
+      if (response != null) {
+        await fetchCategories();
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint('Error updating category: $e');
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> deleteCategory(int id) async {
     isLoading = true;
     notifyListeners();
