@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant_management_app/screens/create_category_screen.dart';
+import 'package:restaurant_management_app/screens/edit_category_screen.dart';
 
 import '../providers/category_provider.dart';
 
@@ -139,10 +140,31 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          tooltip: 'Edit',
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed: () {
-                            // We'll add EditCategoryScreen next.
+                          icon: const Icon(Icons.edit),
+                          onPressed: () async {
+                            final result = await Navigator.push(
+                              this.context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    EditCategoryScreen(category: category),
+                              ),
+                            );
+
+                            if (result == true && mounted) {
+                              await this.context
+                                  .read<CategoryProvider>()
+                                  .fetchCategories();
+
+                              if (!mounted) return;
+
+                              ScaffoldMessenger.of(this.context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Category updated successfully',
+                                  ),
+                                ),
+                              );
+                            }
                           },
                         ),
                         IconButton(
@@ -150,7 +172,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           icon: const Icon(Icons.delete_outline),
                           onPressed: () {
                             _deleteCategory(
-                              context,
+                              this.context,
                               category.id,
                               category.name,
                             );
