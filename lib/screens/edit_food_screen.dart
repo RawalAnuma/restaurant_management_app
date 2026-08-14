@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -24,6 +27,21 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
 
   CategoryModel? _selectedCategory;
   late bool _status;
+  File? _selectedImage;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile == null) {
+      return;
+    }
+
+    setState(() {
+      _selectedImage = File(pickedFile.path);
+    });
+  }
 
   @override
   void initState() {
@@ -77,18 +95,38 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
       return;
     }
 
+    if (_selectedCategory == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a category')));
+      return;
+    }
+
     final foodProvider = context.read<FoodProvider>();
 
     try {
-      await foodProvider.updateFood(
-        id: widget.food.id,
-        categoryId: _selectedCategory!.id,
-        name: _nameController.text.trim(),
-        description: _descriptionController.text.trim(),
-        price: double.parse(_priceController.text.trim()),
-        image: widget.food.image,
-        status: _status,
-      );
+      if (_selectedImage != null) {
+        // New image selected
+        await foodProvider.updateFoodWithImage(
+          id: widget.food.id,
+          categoryId: _selectedCategory!.id,
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim(),
+          price: double.parse(_priceController.text.trim()),
+          image: _selectedImage!,
+          status: _status,
+        );
+      } else {
+        // No new image selected
+        await foodProvider.updateFood(
+          id: widget.food.id,
+          categoryId: _selectedCategory!.id,
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim(),
+          price: double.parse(_priceController.text.trim()),
+          status: _status,
+        );
+      }
 
       if (!mounted) return;
 
@@ -98,7 +136,7 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
 
       Navigator.pop(context);
     } catch (e) {
-      if (!context.mounted) return;
+      if (!mounted) return;
 
       ScaffoldMessenger.of(
         context,
@@ -116,6 +154,68 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              Center(
+                child: Column(
+                  children: [
+                    if (_selectedImage != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          _selectedImage!,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    else if (widget.food.image != null &&
+                        widget.food.image!.isNotEmpty)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          widget.food.image!,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const SizedBox(
+                              height: 180,
+                              child: Center(
+                                child: Icon(
+                                  Icons.broken_image_outlined,
+                                  size: 60,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    else
+                      Container(
+                        height: 180,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.image_outlined,
+                          size: 60,
+                          color: Colors.grey,
+                        ),
+                      ),
+
+                    const SizedBox(height: 12),
+
+                    OutlinedButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: const Text('Choose Image'),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
               Consumer<CategoryProvider>(
                 builder: (context, categoryProvider, child) {
                   if (categoryProvider.isLoading) {
