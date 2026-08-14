@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:restaurant_management_app/utils/api_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -43,18 +45,67 @@ class ApiService {
     throw Exception('Request failed: ${response.statusCode}');
   }
 
-  Future<dynamic> put(String endpoint, Map<String, dynamic> data) async {
-    final response = await http.put(
+  Future<dynamic> postMultipart(
+    String endpoint,
+    Map<String, String> fields, {
+    File? image,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
       Uri.parse('${ApiConstants.baseUrl}$endpoint'),
+    );
+
+    final headers = await _headers();
+
+    // MultipartRequest sets its own Content-Type.
+    headers.remove('Content-Type');
+
+    request.headers.addAll(headers);
+    request.fields.addAll(fields);
+
+    if (image != null) {
+      request.files.add(await http.MultipartFile.fromPath('image', image.path));
+    }
+
+    final streamedResponse = await request.send();
+
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) {
+        return null;
+      }
+
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Request failed: ${response.statusCode} ${response.body}');
+  }
+
+  Future<dynamic> put(String endpoint, Map<String, dynamic> data) async {
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+
+    debugPrint('PUT URL: $url');
+    debugPrint('PUT DATA: $data');
+
+    final response = await http.put(
+      url,
       headers: await _headers(),
       body: jsonEncode(data),
     );
 
+    debugPrint('PUT STATUS: ${response.statusCode}');
+    debugPrint('PUT RESPONSE: ${response.body}');
+
     if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) {
+        return null;
+      }
+
       return jsonDecode(response.body);
     }
 
-    throw Exception('Request failed: ${response.statusCode}');
+    throw Exception('Request failed: ${response.statusCode} ${response.body}');
   }
 
   Future<dynamic> delete(String endpoint) async {
