@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant_management_app/models/category_model.dart';
@@ -20,6 +23,21 @@ class _CreateFoodScreenState extends State<CreateFoodScreen> {
 
   CategoryModel? _selectedCategory;
   bool _status = true;
+  File? _selectedImage;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile == null) {
+      return;
+    }
+
+    setState(() {
+      _selectedImage = File(pickedFile.path);
+    });
+  }
 
   @override
   void initState() {
@@ -51,6 +69,47 @@ class _CreateFoodScreenState extends State<CreateFoodScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              Center(
+                child: Column(
+                  children: [
+                    if (_selectedImage != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          _selectedImage!,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    else
+                      Container(
+                        height: 180,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.image_outlined,
+                          size: 60,
+                          color: Colors.grey,
+                        ),
+                      ),
+
+                    const SizedBox(height: 12),
+
+                    OutlinedButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: const Text('Choose Image'),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
               Consumer<CategoryProvider>(
                 builder: (context, categoryProvider, child) {
                   if (categoryProvider.isLoading) {
@@ -167,15 +226,24 @@ class _CreateFoodScreenState extends State<CreateFoodScreen> {
                     return;
                   }
 
+                  if (_selectedImage == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please select a food image'),
+                      ),
+                    );
+                    return;
+                  }
+
                   final foodProvider = context.read<FoodProvider>();
 
                   try {
-                    await foodProvider.createFood(
+                    await foodProvider.createFoodWithImage(
                       categoryId: _selectedCategory!.id,
                       name: _nameController.text.trim(),
                       description: _descriptionController.text.trim(),
                       price: double.parse(_priceController.text.trim()),
-                      image: null,
+                      image: _selectedImage!,
                       status: _status,
                     );
 
