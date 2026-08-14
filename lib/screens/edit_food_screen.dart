@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../models/category_model.dart';
@@ -27,21 +27,14 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
 
   CategoryModel? _selectedCategory;
   late bool _status;
+
   File? _selectedImage;
+  bool _isSubmitting = false;
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile == null) {
-      return;
-    }
-
-    setState(() {
-      _selectedImage = File(pickedFile.path);
-    });
-  }
+  static const Color primaryOrange = Color(0xFFD35400);
+  static const Color backgroundColor = Color(0xFFF8F7F5);
+  static const Color secondaryText = Color(0xFF6E625B);
+  static const Color borderColor = Color(0xFFE0DDD9);
 
   @override
   void initState() {
@@ -90,17 +83,36 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+
+    if (pickedFile == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _selectedImage = File(pickedFile.path);
+    });
+  }
+
   Future<void> _updateFood() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a category')));
+      _showSnackBar('Please select a category');
       return;
     }
+
+    setState(() {
+      _isSubmitting = true;
+    });
 
     final foodProvider = context.read<FoodProvider>();
 
@@ -117,7 +129,7 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
           status: _status,
         );
       } else {
-        // No new image selected
+        // Keep existing image
         await foodProvider.updateFood(
           id: widget.food.id,
           categoryId: _selectedCategory!.id,
@@ -131,109 +143,325 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Food updated successfully')),
+        const SnackBar(
+          content: Text('Food updated successfully'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
 
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to update food: $e')));
+      setState(() {
+        _isSubmitting = false;
+      });
+
+      _showSnackBar('Failed to update food: $e');
     }
+  }
+
+  void _showSnackBar(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String hintText,
+    Widget? prefixIcon,
+  }) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: const TextStyle(color: secondaryText, fontSize: 14),
+      prefixIcon: prefixIcon,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: borderColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: borderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: primaryOrange, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String title, {bool required = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          if (required)
+            const Text(
+              ' *',
+              style: TextStyle(
+                color: primaryOrange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageSection() {
+    final hasNewImage = _selectedImage != null;
+    final hasExistingImage =
+        widget.food.image != null && widget.food.image!.isNotEmpty;
+
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: _pickImage,
+          child: Container(
+            height: 190,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: hasNewImage ? primaryOrange : borderColor,
+              ),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: hasNewImage
+                ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.file(_selectedImage!, fit: BoxFit.cover),
+                      _editImageButton(),
+                    ],
+                  )
+                : hasExistingImage
+                ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        widget.food.image!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return _imageErrorWidget();
+                        },
+                      ),
+                      _editImageButton(),
+                    ],
+                  )
+                : _emptyImageWidget(),
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        TextButton.icon(
+          onPressed: _pickImage,
+          icon: const Icon(
+            Icons.photo_library_outlined,
+            size: 18,
+            color: primaryOrange,
+          ),
+          label: Text(
+            hasNewImage ? 'Change Image' : 'Change Food Image',
+            style: const TextStyle(
+              color: primaryOrange,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _editImageButton() {
+    return Positioned(
+      right: 12,
+      top: 12,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.55),
+          shape: BoxShape.circle,
+        ),
+        child: IconButton(
+          onPressed: _pickImage,
+          icon: const Icon(Icons.edit_outlined, color: Colors.white, size: 19),
+          tooltip: 'Change image',
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyImageWidget() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          height: 52,
+          width: 52,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFE8D9),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.add_photo_alternate_outlined,
+            color: primaryOrange,
+            size: 27,
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'No Food Image',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 5),
+        const Text(
+          'Tap to select an image from gallery',
+          style: TextStyle(fontSize: 12, color: secondaryText),
+        ),
+      ],
+    );
+  }
+
+  Widget _imageErrorWidget() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.broken_image_outlined, size: 45, color: secondaryText),
+        const SizedBox(height: 8),
+        const Text(
+          'Unable to load image',
+          style: TextStyle(color: secondaryText, fontSize: 13),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Food')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: backgroundColor,
+
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 20,
+            color: Colors.black87,
+          ),
+        ),
+        title: const Text(
+          'Edit Food',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+
+      body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             children: [
-              Center(
-                child: Column(
-                  children: [
-                    if (_selectedImage != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          _selectedImage!,
-                          height: 180,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    else if (widget.food.image != null &&
-                        widget.food.image!.isNotEmpty)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          widget.food.image!,
-                          height: 180,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const SizedBox(
-                              height: 180,
-                              child: Center(
-                                child: Icon(
-                                  Icons.broken_image_outlined,
-                                  size: 60,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      )
-                    else
-                      Container(
-                        height: 180,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.image_outlined,
-                          size: 60,
-                          color: Colors.grey,
-                        ),
-                      ),
-
-                    const SizedBox(height: 12),
-
-                    OutlinedButton.icon(
-                      onPressed: _pickImage,
-                      icon: const Icon(Icons.photo_library_outlined),
-                      label: const Text('Choose Image'),
-                    ),
-                  ],
-                ),
+              const Text(
+                'Update food information',
+                style: TextStyle(fontSize: 14, color: secondaryText),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
+
+              // IMAGE
+              _sectionTitle('Food Image', required: true),
+
+              _buildImageSection(),
+
+              const SizedBox(height: 12),
+
+              // CATEGORY
+              _sectionTitle('Category', required: true),
+
               Consumer<CategoryProvider>(
                 builder: (context, categoryProvider, child) {
                   if (categoryProvider.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return Container(
+                      height: 54,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: borderColor),
+                      ),
+                      child: const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: primaryOrange,
+                        ),
+                      ),
+                    );
                   }
 
                   return DropdownButtonFormField<CategoryModel>(
                     initialValue: _selectedCategory,
-                    decoration: const InputDecoration(
-                      labelText: 'Category',
-                      border: OutlineInputBorder(),
+                    isExpanded: true,
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: secondaryText,
                     ),
-                    items: categoryProvider.categories.map((category) {
-                      return DropdownMenuItem<CategoryModel>(
-                        value: category,
-                        child: Text(category.name),
-                      );
-                    }).toList(),
+                    decoration: _inputDecoration(
+                      hintText: 'Select category',
+                      prefixIcon: const Icon(
+                        Icons.category_outlined,
+                        color: secondaryText,
+                        size: 20,
+                      ),
+                    ),
+                    items: categoryProvider.categories
+                        .map(
+                          (category) => DropdownMenuItem<CategoryModel>(
+                            value: category,
+                            child: Text(
+                              category.name,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (category) {
                       setState(() {
                         _selectedCategory = category;
@@ -250,13 +478,21 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
                 },
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+
+              // FOOD NAME
+              _sectionTitle('Food Name', required: true),
 
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Food Name',
-                  border: OutlineInputBorder(),
+                textInputAction: TextInputAction.next,
+                decoration: _inputDecoration(
+                  hintText: 'Enter food name',
+                  prefixIcon: const Icon(
+                    Icons.restaurant_menu_outlined,
+                    color: secondaryText,
+                    size: 20,
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -267,14 +503,25 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
                 },
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+
+              // DESCRIPTION
+              _sectionTitle('Description', required: true),
 
               TextFormField(
                 controller: _descriptionController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
+                maxLines: 4,
+                textInputAction: TextInputAction.newline,
+                decoration: _inputDecoration(
+                  hintText: 'Describe your food...',
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.only(bottom: 58),
+                    child: Icon(
+                      Icons.description_outlined,
+                      color: secondaryText,
+                      size: 20,
+                    ),
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -285,16 +532,24 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
                 },
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+
+              // PRICE
+              _sectionTitle('Price', required: true),
 
               TextFormField(
                 controller: _priceController,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
-                  labelText: 'Price',
-                  border: OutlineInputBorder(),
+                textInputAction: TextInputAction.done,
+                decoration: _inputDecoration(
+                  hintText: 'Enter price',
+                  prefixIcon: const Icon(
+                    Icons.currency_rupee,
+                    color: secondaryText,
+                    size: 20,
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -311,24 +566,120 @@ class _EditFoodScreenState extends State<EditFoodScreen> {
                 },
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-              SwitchListTile(
-                title: const Text('Available'),
-                value: _status,
-                contentPadding: EdgeInsets.zero,
-                onChanged: (value) {
-                  setState(() {
-                    _status = value;
-                  });
-                },
+              // AVAILABILITY
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: borderColor),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      height: 40,
+                      width: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE9F7EF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        _status
+                            ? Icons.check_circle_outline
+                            : Icons.remove_circle_outline,
+                        color: _status ? Colors.green : secondaryText,
+                        size: 21,
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Availability',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            _status
+                                ? 'This food is available for ordering'
+                                : 'This food is currently unavailable',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: secondaryText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Switch(
+                      value: _status,
+                      activeThumbColor: Colors.white,
+                      activeTrackColor: primaryOrange,
+                      onChanged: (value) {
+                        setState(() {
+                          _status = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
 
-              ElevatedButton(
-                onPressed: _updateFood,
-                child: const Text('Update Food'),
+              // UPDATE BUTTON
+              SizedBox(
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _updateFood,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryOrange,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: primaryOrange.withValues(
+                      alpha: 0.6,
+                    ),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Update Food',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(Icons.check_rounded, size: 20),
+                          ],
+                        ),
+                ),
               ),
             ],
           ),
