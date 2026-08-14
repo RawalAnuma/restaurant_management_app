@@ -11,11 +11,33 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
+    debugPrint('TOKEN FROM STORAGE: $token');
+
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
     };
+  }
+
+  Future<dynamic> logout(String endpoint) async {
+    final response = await http.post(
+      Uri.parse('${ApiConstants.baseUrl}$endpoint'),
+      headers: await _headers(),
+    );
+
+    debugPrint('LOGOUT STATUS: ${response.statusCode}');
+    debugPrint('LOGOUT RESPONSE: ${response.body}');
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) {
+        return null;
+      }
+
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Logout failed: ${response.statusCode} ${response.body}');
   }
 
   Future<dynamic> get(String endpoint) async {
@@ -28,7 +50,7 @@ class ApiService {
       return jsonDecode(response.body);
     }
 
-    throw Exception('Request failed: ${response.statusCode}');
+    throw Exception('Request failed: ${response.statusCode}${response.body}');
   }
 
   Future<dynamic> post(String endpoint, Map<String, dynamic> data) async {
