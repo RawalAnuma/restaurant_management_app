@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../providers/auth_provider.dart';
 import 'food_screen.dart';
@@ -40,8 +41,27 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     }
   }
 
+  Future<void> _clearToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return Scaffold(
+      body: Center(
+        child: ElevatedButton(
+          onPressed: _clearToken,
+          child: const Text('Clear Token & Go to Login'),
+        ),
+      ),
+    );
   }
 }
