@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:restaurant_management_app/models/food_model.dart';
 import 'package:restaurant_management_app/services/api_service.dart';
@@ -51,13 +53,36 @@ class FoodProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> createFoodWithImage({
+    required int categoryId,
+    required String name,
+    required String description,
+    required double price,
+    required File image,
+    required bool status,
+  }) async {
+    try {
+      await apiService.postMultipart('/foods', {
+        'category_id': categoryId.toString(),
+        'name': name,
+        'description': description,
+        'price': price.toString(),
+        'status': status ? '1' : '0',
+      }, image: image);
+
+      await fetchFoods();
+    } catch (e) {
+      debugPrint('Error creating food with image: $e');
+      rethrow;
+    }
+  }
+
   Future<void> updateFood({
     required int id,
     required int categoryId,
     required String name,
     required String description,
     required double price,
-    String? image,
     required bool status,
   }) async {
     try {
@@ -66,13 +91,38 @@ class FoodProvider extends ChangeNotifier {
         'name': name,
         'description': description,
         'price': price,
-        'image': image,
         'status': status,
       });
 
       await fetchFoods();
     } catch (e) {
       debugPrint('Error updating food: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateFoodWithImage({
+    required int id,
+    required int categoryId,
+    required String name,
+    required String description,
+    required double price,
+    required File image,
+    required bool status,
+  }) async {
+    try {
+      await apiService.postMultipart('/foods/$id', {
+        'category_id': categoryId.toString(),
+        'name': name,
+        'description': description,
+        'price': price.toString(),
+        'status': status ? '1' : '0',
+        '_method': 'PUT',
+      }, image: image);
+
+      await fetchFoods();
+    } catch (e) {
+      debugPrint('Error updating food with image: $e');
       rethrow;
     }
   }
