@@ -30,6 +30,7 @@ class OrderItemModel {
   final int id;
   final int foodId;
   final String foodName;
+  final String? foodImage;
   final int quantity;
   final double price;
 
@@ -37,15 +38,20 @@ class OrderItemModel {
     required this.id,
     required this.foodId,
     required this.foodName,
+    required this.foodImage,
     required this.quantity,
     required this.price,
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
+    final food = json['food'];
+    final image = food?['image'];
+    
     return OrderItemModel(
       id: json['id'],
       foodId: json['food_id'],
       foodName: json['food_name'] ?? json['food']?['name'] ?? 'Unknown Food',
+      foodImage: image != null ? 'http://10.0.2.2:8000/storage/$image' : null,
       quantity: json['quantity'],
       price: double.tryParse(json['price']?.toString() ?? '0') ?? 0,
     );
