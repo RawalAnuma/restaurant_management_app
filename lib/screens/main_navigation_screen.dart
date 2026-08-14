@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:restaurant_management_app/screens/profile_screen.dart';
 
 import 'category_screen.dart';
 import 'dashboard_screen.dart';
@@ -13,21 +14,38 @@ class MainNavigationScreen extends StatefulWidget {
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  static const Color primaryColor = Color(0xFFD35400);
-
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    FoodScreen(),
-    CategoryScreen(),
-    OrderScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _screens = [
+      DashboardScreen(
+        onViewAllOrders: () {
+          setState(() {
+            _currentIndex = 3;
+          });
+        },
+        onProfile: () {
+          setState(() {
+            _currentIndex = 4;
+          });
+        },
+      ),
+      const FoodScreen(),
+      const CategoryScreen(),
+      const OrderScreen(),
+      const ProfileScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: _screens[_currentIndex],
 
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
@@ -38,54 +56,35 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           });
         },
 
-        backgroundColor: Colors.white,
-
-        indicatorColor: const Color(0xFFFFEFE5),
-
-        elevation: 3,
-
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: primaryColor,
-            );
-          }
-
-          return const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF77706B),
-          );
-        }),
-
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined, color: Color(0xFF77706B)),
-            selectedIcon: Icon(Icons.dashboard, color: primaryColor),
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
 
           NavigationDestination(
-            icon: Icon(
-              Icons.restaurant_menu_outlined,
-              color: Color(0xFF77706B),
-            ),
-            selectedIcon: Icon(Icons.restaurant_menu, color: primaryColor),
+            icon: Icon(Icons.restaurant_menu_outlined),
+            selectedIcon: Icon(Icons.restaurant_menu),
             label: 'Foods',
           ),
 
           NavigationDestination(
-            icon: Icon(Icons.category_outlined, color: Color(0xFF77706B)),
-            selectedIcon: Icon(Icons.category, color: primaryColor),
+            icon: Icon(Icons.category_outlined),
+            selectedIcon: Icon(Icons.category),
             label: 'Categories',
           ),
 
           NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined, color: Color(0xFF77706B)),
-            selectedIcon: Icon(Icons.receipt_long, color: primaryColor),
+            icon: Icon(Icons.receipt_long_outlined),
+            selectedIcon: Icon(Icons.receipt_long),
             label: 'Orders',
+          ),
+
+          NavigationDestination(
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
+            label: 'Profile',
           ),
         ],
       ),
