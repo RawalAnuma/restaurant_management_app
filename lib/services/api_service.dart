@@ -26,9 +26,7 @@ class ApiService {
       headers: await _headers(),
     );
 
-    debugPrint('LOGOUT STATUS: ${response.statusCode}');
-    debugPrint('LOGOUT RESPONSE: ${response.body}');
-
+  
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) {
         return null;
