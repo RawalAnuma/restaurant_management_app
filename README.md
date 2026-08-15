@@ -129,9 +129,10 @@ Make sure you have installed:
 ### Clone the Project
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/RawalAnuma/restaurant_management_app.git
 cd restaurant_management_app
 
+```
 
 ## 🔗 Backend
 
