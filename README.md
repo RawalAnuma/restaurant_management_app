@@ -84,19 +84,19 @@ The application allows restaurant administrators to manage foods, categories, an
 
 The application follows a layered architecture:
 
-Flutter UI
-↓
-Provider
-↓
-API Service
-↓
-Laravel REST API
-↓
-Repository
-↓
-Eloquent Model
-↓
-MySQL
+- Flutter UI
+- ↓
+- Provider
+- ↓
+- API Service
+- ↓
+- Laravel REST API
+- ↓
+- Repository
+- ↓
+- Eloquent Model
+- ↓
+- MySQL
 
 ---
 
@@ -126,6 +126,8 @@ Make sure you have installed:
 - MySQL
 - XAMPP
 
+---
+
 ### Clone the Project
 
 ```bash
@@ -133,6 +135,7 @@ git clone https://github.com/RawalAnuma/restaurant_management_app.git
 cd restaurant_management_app
 
 ```
+---
 
 ## 🔗 Backend
 
@@ -140,8 +143,9 @@ This application uses a Laravel REST API as its backend.
 
 Backend repository:
 
-<your-laravel-repository-link>
+https://github.com/RawalAnuma/restaurant_management_system.git
 
+---
 
 ## 🗄️ Database
 
@@ -153,6 +157,7 @@ The application uses MySQL to store:
 - Orders
 - Order Items
 
+---
 
 ## 🔑 Authentication
 
@@ -162,6 +167,7 @@ After successful login, the API returns an authentication token. The Flutter app
 
 Authorization: Bearer <token>
 
+---
 
 ## 🔮 Future Improvements
 - Sales and revenue reports
@@ -172,8 +178,9 @@ Authorization: Bearer <token>
 - Staff management
 - Customer application
 
+---
 
 ## 👩‍💻 Author
-Anuma Rawal
-B.Sc. (Hons) Computing
+- Anuma Rawal
+- B.Sc. (Hons) Computing
 
