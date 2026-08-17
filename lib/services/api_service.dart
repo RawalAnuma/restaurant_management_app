@@ -26,7 +26,6 @@ class ApiService {
       headers: await _headers(),
     );
 
-  
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) {
         return null;
@@ -59,10 +58,29 @@ class ApiService {
     );
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) {
+        return null;
+      }
       return jsonDecode(response.body);
     }
 
-    throw Exception('Request failed: ${response.statusCode}');
+    try {
+      final errorData = jsonDecode(response.body);
+
+      if (response.statusCode == 422) {
+        throw Exception(errorData['message'] ?? 'Invalid email or password.');
+      }
+
+      throw Exception(
+        errorData['message'] ?? 'Something went wrong. Please try again.',
+      );
+    } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+
+      throw Exception('Something went wrong. Please try again.');
+    }
   }
 
   Future<dynamic> postMultipart(
