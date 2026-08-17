@@ -5,6 +5,8 @@ import '../models/category_model.dart';
 import '../providers/category_provider.dart';
 import 'create_category_screen.dart';
 import 'edit_category_screen.dart';
+import '../widgets/category_card.dart';
+import '../widgets/empty_category_state.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
@@ -156,165 +158,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }
   }
 
-  Widget _buildCategoryCard(CategoryModel category) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // CATEGORY ICON
-          Container(
-            height: 57,
-            width: 57,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF3ED),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              _getCategoryIcon(category.name),
-              color: primaryOrange,
-              size: 29,
-            ),
-          ),
-
-          const SizedBox(width: 18),
-
-          // CATEGORY NAME
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  category.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Food category',
-                  style: TextStyle(color: secondaryText, fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          // EDIT BUTTON
-          _buildActionButton(
-            icon: Icons.edit_outlined,
-            color: primaryOrange,
-            onPressed: () {
-              _openEditCategory(category);
-            },
-          ),
-
-          const SizedBox(width: 8),
-
-          // DELETE BUTTON
-          _buildActionButton(
-            icon: Icons.delete_outline,
-            color: Colors.red,
-            onPressed: () {
-              _deleteCategory(category);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onPressed,
-  }) {
-    return Material(
-      color: const Color(0xFFFFF8F5),
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onPressed,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          height: 43,
-          width: 43,
-          child: Icon(icon, color: color, size: 21),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              height: 75,
-              width: 75,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF3ED),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(
-                Icons.category_outlined,
-                size: 38,
-                color: primaryOrange,
-              ),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              'No Categories Yet',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 7),
-            const Text(
-              'Create a category to organize your menu.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: secondaryText, fontSize: 14),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: _openCreateCategory,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Category'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryOrange,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final categoryProvider = context.watch<CategoryProvider>();
@@ -358,7 +201,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       body: categoryProvider.isLoading
           ? const Center(child: CircularProgressIndicator(color: primaryOrange))
           : categoryProvider.categories.isEmpty
-          ? _buildEmptyState()
+          ? EmptyCategoryState(onAddCategory: _openCreateCategory)
           : RefreshIndicator(
               color: primaryOrange,
               onRefresh: () {
@@ -386,7 +229,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   const SizedBox(height: 28),
 
                   ...categoryProvider.categories.map((category) {
-                    return _buildCategoryCard(category);
+                    return CategoryCard(
+                      category: category,
+                      icon: _getCategoryIcon(category.name),
+                      onEdit: () => _openEditCategory(category),
+                      onDelete: () => _deleteCategory(category),
+                    );
                   }),
                 ],
               ),
