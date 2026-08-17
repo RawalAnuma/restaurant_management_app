@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:restaurant_management_app/screens/profile_screen.dart';
 
 import '../providers/food_provider.dart';
 import '../providers/category_provider.dart';
