@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/food_provider.dart';
 import '../models/category_model.dart';
 import '../providers/category_provider.dart';
 import 'create_category_screen.dart';
@@ -30,6 +31,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       if (!mounted) return;
 
       context.read<CategoryProvider>().fetchCategories();
+      context.read<FoodProvider>().fetchFoods();
     });
   }
 
@@ -158,9 +160,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }
   }
 
+  int _getFoodCount(int categoryId, FoodProvider provider) {
+    return provider.foods.where((food) => food.categoryId == categoryId).length;
+  }
+
   @override
   Widget build(BuildContext context) {
     final categoryProvider = context.watch<CategoryProvider>();
+    final foodProvider = context.watch<FoodProvider>();
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -190,7 +197,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
         actions: [
           IconButton(
             onPressed: () {
-              // Search can be implemented later.
             },
             icon: const Icon(Icons.search, color: Color(0xFF3F3028), size: 24),
           ),
@@ -232,6 +238,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     return CategoryCard(
                       category: category,
                       icon: _getCategoryIcon(category.name),
+                      foodCount: _getFoodCount(category.id, foodProvider),
                       onEdit: () => _openEditCategory(category),
                       onDelete: () => _deleteCategory(category),
                     );
