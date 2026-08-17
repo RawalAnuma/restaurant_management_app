@@ -1,186 +1,291 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:restaurant_management_app/providers/food_provider.dart';
-import 'package:restaurant_management_app/screens/edit_food_screen.dart';
 
 import '../models/food_model.dart';
 
 class FoodCard extends StatelessWidget {
   final FoodModel food;
+  final String categoryName;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-  const FoodCard({super.key, required this.food});
+  const FoodCard({
+    super.key,
+    required this.food,
+    required this.categoryName,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
-  Future<void> _confirmDelete(BuildContext context) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete Food'),
-          content: Text('Are you sure you want to delete "${food.name}"?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, false);
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, true);
-              },
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldDelete != true || !context.mounted) {
-      return;
-    }
-
-    final foodProvider = context.read<FoodProvider>();
-
-    try {
-      await foodProvider.deleteFood(food.id);
-
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Food deleted successfully')),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to delete food: $e')));
-    }
-  }
+  static const Color primaryColor = Color(0xFFD35400);
+  static const Color darkBrown = Color(0xFF4A3024);
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 180,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.orange.shade50,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-            ),
-            child: food.image != null
-                ? ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16),
-                    ),
-                    child: Image.network(food.image!, fit: BoxFit.cover),
-                  )
-                : Center(
-                    child: Icon(
-                      Icons.restaurant,
-                      size: 65,
-                      color: Colors.orange.shade300,
-                    ),
-                  ),
+    final bool isAvailable = food.status;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // IMAGE
+            Stack(
               children: [
-                Text(
-                  food.name,
-                  style: const TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                SizedBox(
+                  height: 190,
+                  width: double.infinity,
+                  child: food.image != null && food.image!.isNotEmpty
+                      ? Image.network(
+                          food.image!,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return _ImagePlaceholder(isAvailable: isAvailable);
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            }
 
-                const SizedBox(height: 6),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    food.categoryName,
-                    style: TextStyle(
-                      color: Colors.orange.shade800,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                Text(
-                  food.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.grey.shade700),
-                ),
-
-                const SizedBox(height: 12),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Rs. ${food.price.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green.shade700,
-                      ),
-                    ),
-
-                    Row(
-                      children: [
-                        IconButton(
-                          tooltip: 'Edit',
-                          icon: const Icon(Icons.edit),
-                          color: Colors.blue.shade600,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    EditFoodScreen(food: food),
+                            return Container(
+                              color: const Color(0xFFF0EEEC),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: primaryColor,
+                                ),
                               ),
                             );
                           },
-                        ),
+                        )
+                      : _ImagePlaceholder(isAvailable: isAvailable),
+                ),
 
-                        IconButton(
-                          tooltip: 'Delete',
-                          icon: const Icon(Icons.delete),
-                          color: Colors.red.shade600,
-                          onPressed: () {
-                            _confirmDelete(context);
-                          },
+                // AVAILABILITY
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.94),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: isAvailable
+                                ? const Color(0xFF2E9B57)
+                                : const Color(0xFFD32F2F),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          isAvailable ? 'Available' : 'Out of Stock',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isAvailable
+                                ? const Color(0xFF247A43)
+                                : const Color(0xFFD32F2F),
+                          ),
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+
+            // INFORMATION
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          food.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: darkBrown,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFEFE5),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          'Rs. ${food.price.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 7),
+
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.category_outlined,
+                        size: 15,
+                        color: Color(0xFF8A817B),
+                      ),
+
+                      const SizedBox(width: 5),
+
+                      Text(
+                        categoryName,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF8A817B),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  Container(height: 1, color: const Color(0xFFF0EEEC)),
+
+                  const SizedBox(height: 11),
+
+                  // ACTIONS
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: onEdit,
+                          icon: const Icon(Icons.edit_outlined, size: 17),
+                          label: const Text(
+                            'Edit',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF42658C),
+                            side: const BorderSide(color: Color(0xFFDCE3EA)),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: onDelete,
+                          icon: const Icon(Icons.delete_outline, size: 17),
+                          label: const Text(
+                            'Delete',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFFD32F2F),
+                            side: const BorderSide(color: Color(0xFFF0D5D5)),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ImagePlaceholder extends StatelessWidget {
+  final bool isAvailable;
+
+  const _ImagePlaceholder({required this.isAvailable});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFFECEBE9),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.image_not_supported_outlined,
+              size: 48,
+              color: isAvailable
+                  ? const Color(0xFFB8B1AB)
+                  : const Color(0xFFE0B6A6),
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              'No image available',
+              style: TextStyle(
+                fontSize: 12,
+                color: isAvailable
+                    ? const Color(0xFF8A817B)
+                    : const Color(0xFFB9826D),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
