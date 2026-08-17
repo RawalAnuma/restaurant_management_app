@@ -4,6 +4,7 @@ import 'package:restaurant_management_app/models/category_model.dart';
 class CategoryCard extends StatelessWidget {
   final CategoryModel category;
   final IconData icon;
+  final int foodCount;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -11,6 +12,7 @@ class CategoryCard extends StatelessWidget {
     super.key,
     required this.category,
     required this.icon,
+    required this.foodCount,
     required this.onEdit,
     required this.onDelete,
   });
@@ -60,8 +62,8 @@ class CategoryCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Food category',
+                Text(
+                  '$foodCount ${foodCount == 1 ? 'Food' : 'Foods'}',
                   style: TextStyle(color: Color(0xFF8A7D75), fontSize: 14),
                 ),
               ],
